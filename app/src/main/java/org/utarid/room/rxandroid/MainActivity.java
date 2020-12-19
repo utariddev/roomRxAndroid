@@ -15,6 +15,12 @@ import org.utarid.room.rxandroid.databinding.ActivityMainBinding;
 import java.util.ArrayList;
 import java.util.List;
 
+import io.reactivex.MaybeObserver;
+import io.reactivex.android.schedulers.AndroidSchedulers;
+import io.reactivex.annotations.NonNull;
+import io.reactivex.disposables.Disposable;
+import io.reactivex.schedulers.Schedulers;
+
 public class MainActivity extends AppCompatActivity {
 
     private ActivityMainBinding binding;
@@ -62,49 +68,98 @@ public class MainActivity extends AppCompatActivity {
     }
 
     public void insertWorker() {
-        new Thread(new Runnable() {
-            @Override
-            public void run() {
-                EntityWorker worker = new EntityWorker(binding.txtInsertWorkerName.getText().toString(), binding.txtInsertWorkerSurname.getText().toString(), binding.txtInsertWorkerAge.getText().toString());
-                long newInsertedID = databaseWorker.daoWorker().insertWorker(worker);
-                Snackbar snackbar = Snackbar.make(binding.mainLayout, "id : " + newInsertedID + " is added", Snackbar.LENGTH_LONG);
-                snackbar.show();
-            }
-        }).start();
+
+        EntityWorker worker = new EntityWorker(binding.txtInsertWorkerName.getText().toString(), binding.txtInsertWorkerSurname.getText().toString(), binding.txtInsertWorkerAge.getText().toString());
+        databaseWorker.daoWorker().insertWorker(worker)
+                .subscribeOn(Schedulers.io())
+                .observeOn(AndroidSchedulers.mainThread())
+                .subscribe(new MaybeObserver<Long>() {
+                    @Override
+                    public void onSubscribe(@NonNull Disposable d) {
+
+                    }
+
+                    @Override
+                    public void onSuccess(@NonNull Long newInsertedID) {
+                        Snackbar snackbar = Snackbar.make(binding.mainLayout, "id : " + newInsertedID + " is added", Snackbar.LENGTH_LONG);
+                        snackbar.show();
+                    }
+
+                    @Override
+                    public void onError(@NonNull Throwable e) {
+
+                    }
+
+                    @Override
+                    public void onComplete() {
+
+                    }
+                });
     }
 
     public void deleteWorker() {
-        new Thread(new Runnable() {
-            @Override
-            public void run() {
-                EntityWorker worker = new EntityWorker(Integer.parseInt(binding.txtDeleteWorkderID.getText().toString()));
-                int deletedRow = databaseWorker.daoWorker().deleteWorker(worker);
-                Snackbar snackbar;
-                if (deletedRow == 1) {
-                    snackbar = Snackbar.make(binding.mainLayout, "id : " + binding.txtDeleteWorkderID.getText().toString() + " is deleted", Snackbar.LENGTH_LONG);
-                } else {
-                    snackbar = Snackbar.make(binding.mainLayout, "deletion is not successful", Snackbar.LENGTH_LONG);
-                }
-                snackbar.show();
-            }
-        }).start();
+
+        EntityWorker worker = new EntityWorker(Integer.parseInt(binding.txtDeleteWorkderID.getText().toString()));
+        databaseWorker.daoWorker().deleteWorker(worker)
+                .subscribeOn(Schedulers.io())
+                .observeOn(AndroidSchedulers.mainThread())
+                .subscribe(new MaybeObserver<Integer>() {
+                    @Override
+                    public void onSubscribe(@NonNull Disposable d) {
+
+                    }
+
+                    @Override
+                    public void onSuccess(@NonNull Integer deletedRow) {
+                        Snackbar snackbar;
+                        if (deletedRow == 1) {
+                            snackbar = Snackbar.make(binding.mainLayout, "id : " + binding.txtDeleteWorkderID.getText().toString() + " is deleted", Snackbar.LENGTH_LONG);
+                        } else {
+                            snackbar = Snackbar.make(binding.mainLayout, "deletion is not successful", Snackbar.LENGTH_LONG);
+                        }
+                        snackbar.show();
+                    }
+
+                    @Override
+                    public void onError(@NonNull Throwable e) {
+
+                    }
+
+                    @Override
+                    public void onComplete() {
+
+                    }
+                });
     }
 
     public void getAllWorkers() {
-        new Thread(new Runnable() {
-            @Override
-            public void run() {
-                globalWorkersList.clear();
-                List<EntityWorker> workersList = databaseWorker.daoWorker().getAllWorkers();
 
-                runOnUiThread(new Runnable() {
+        globalWorkersList.clear();
+
+        databaseWorker.daoWorker().getAllWorkers()
+                .subscribeOn(Schedulers.io())
+                .observeOn(AndroidSchedulers.mainThread())
+                .subscribe(new MaybeObserver<List<EntityWorker>>() {
                     @Override
-                    public void run() {
+                    public void onSubscribe(@NonNull Disposable d) {
+
+                    }
+
+                    @Override
+                    public void onSuccess(@NonNull List<EntityWorker> workersList) {
                         globalWorkersList.addAll(workersList);
                         mAdapter.notifyDataSetChanged();
                     }
+
+                    @Override
+                    public void onError(@NonNull Throwable e) {
+
+                    }
+
+                    @Override
+                    public void onComplete() {
+
+                    }
                 });
-            }
-        }).start();
     }
 }
